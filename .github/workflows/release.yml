@@ -8,7 +8,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Tag must match SBX_VER
         run: |
           v=$(sed -n 's/^SBX_VER="\(.*\)"/\1/p' sbx.sh)
