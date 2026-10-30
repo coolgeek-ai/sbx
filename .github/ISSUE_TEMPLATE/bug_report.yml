@@ -1,0 +1,29 @@
+name: Bug report
+description: The script fails or a node cannot connect
+labels: [bug]
+body:
+  - type: input
+    id: ver
+    attributes: { label: "sbx version (sbx version) and core version (sing-box version)" }
+    validations: { required: true }
+  - type: input
+    id: client
+    attributes: { label: "Client and version", placeholder: "v2rayN 7.x.x (Xray x.y.z) / v2rayNG 2.x.x" }
+    validations: { required: true }
+  - type: dropdown
+    id: proto
+    attributes:
+      label: Protocol
+      options: [reality, hysteria2, ss2022, trojan, vless-ws]
+    validations: { required: true }
+  - type: textarea
+    id: doctor
+    attributes: { label: "Output of sbx doctor", render: text }
+  - type: textarea
+    id: link
+    attributes:
+      label: "Share link (must be redacted: replace the UUID / password / public key / sid / IP, keep the parameter names)"
+      render: text
+  - type: textarea
+    id: log
+    attributes: { label: "Server log (sbx log) / client log", render: text }

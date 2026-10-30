@@ -1,0 +1,22 @@
+name: Client compatibility report
+description: You tested a specific v2rayN / v2rayNG version (both successes and failures are welcome)
+labels: [compat-report]
+body:
+  - type: input
+    id: client
+    attributes: { label: "Client + version + core version" }
+    validations: { required: true }
+  - type: checkboxes
+    id: ok
+    attributes:
+      label: Protocols that worked in your test
+      options:
+        - label: reality
+        - label: hysteria2 (self-signed + pin)
+        - label: hysteria2 (real certificate for a domain)
+        - label: ss2022
+        - label: trojan
+        - label: vless-ws
+  - type: textarea
+    id: note
+    attributes: { label: "Notes (errors for protocols that failed / fields you had to change manually after importing)" }

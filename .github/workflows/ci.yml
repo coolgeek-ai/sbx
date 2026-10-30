@@ -1,0 +1,28 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax + shellcheck
+        run: |
+          bash -n sbx.sh
+          shellcheck -S warning sbx.sh tests/*.sh compat/*.sh
+      - name: Version matches CHANGELOG
+        run: |
+          v=$(sed -n 's/^SBX_VER="\(.*\)"/\1/p' sbx.sh)
+          grep -q "^## \[$v\]" CHANGELOG.md || { echo "CHANGELOG.md has no [$v] entry"; exit 1; }
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the core versions recorded in compat/known-good.json
+        run: tests/fetch-cores.sh
+      - name: Config + end-to-end tests
+        run: tests/run-all.sh

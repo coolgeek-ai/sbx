@@ -1,0 +1,36 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tag must match SBX_VER
+        run: |
+          v=$(sed -n 's/^SBX_VER="\(.*\)"/\1/p' sbx.sh)
+          [ "v$v" = "$GITHUB_REF_NAME" ] || { echo "tag $GITHUB_REF_NAME != SBX_VER v$v"; exit 1; }
+      - name: Test
+        run: |
+          shellcheck -S warning sbx.sh tests/*.sh compat/*.sh
+          tests/fetch-cores.sh
+          tests/run-all.sh
+      - name: Package
+        run: |
+          sha256sum sbx.sh > SHA256SUMS
+          v=${GITHUB_REF_NAME#v}
+          awk -v v="$v" '$0 ~ "^## \\["v"\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
+          { echo; echo "Tested cores: $(cat tests/.bin/versions.txt)"; } >> notes.md
+      - name: Publish
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" sbx.sh SHA256SUMS --clobber
+            gh release edit "$GITHUB_REF_NAME" --notes-file notes.md
+          else
+            gh release create "$GITHUB_REF_NAME" sbx.sh SHA256SUMS --title "$GITHUB_REF_NAME" --notes-file notes.md
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}

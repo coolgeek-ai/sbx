@@ -1,0 +1,13 @@
+{
+  "_comment": "tested = versions that CI has run end-to-end; reviewed = only release notes / issues were read, not tested on a real client (client GUIs cannot run in CI)",
+  "verified_at": "2026-10-28",
+  "tested": {
+    "sing-box": "1.14.4",
+    "xray-core": "26.10.21"
+  },
+  "reviewed": {
+    "v2rayN": "7.25.6",
+    "v2rayNG": "2.3.11"
+  },
+  "_source_reviewed": "v2rayN master 57f17d5, v2rayNG master aa4b055 (2.3.14), Xray-core master 1576e79: link parsing and outbound construction were checked against the source code, not tested in a GUI"
+}

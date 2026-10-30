@@ -1,0 +1,58 @@
+name: compat-watch
+# Every day: run the tests against the latest sing-box + Xray-core, and check whether v2rayN / v2rayNG / the cores have new releases.
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+env:
+  GH_TOKEN: ${{ github.token }}
+jobs:
+  latest-cores:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the latest cores
+        run: SING_BOX_VERSION=latest XRAY_VERSION=latest tests/fetch-cores.sh
+      - name: Test
+        id: t
+        continue-on-error: true
+        run: tests/run-all.sh 2>&1 | tee /tmp/test.log; exit "${PIPESTATUS[0]}"
+      - name: Open an issue on failure (deduplicated)
+        if: steps.t.outcome == 'failure'
+        run: |
+          ver=$(cat tests/.bin/versions.txt)
+          title="compat-break: tests failed with the latest cores ($ver)"
+          gh label create compat-break --color B60205 2>/dev/null || true
+          n=$(gh issue list --label compat-break --state open --json number -q length)
+          if [ "$n" = "0" ]; then
+            { echo "The daily compatibility check failed: **$ver**"; echo; echo '```'; tail -n 60 /tmp/test.log; echo '```'; echo; echo "See docs/MAINTAINING.md for how these are handled."; } > body.md
+            gh issue create --title "$title" --label compat-break --body-file body.md
+          fi
+      - name: Propagate the failure to the workflow status
+        if: steps.t.outcome == 'failure'
+        run: exit 1
+
+  upstream-watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for new upstream releases (sing-box / Xray-core / v2rayN / v2rayNG)
+        run: |
+          gh label create upstream-update --color 1D76DB 2>/dev/null || true
+          compat/watch.sh | while read -r proj new old; do
+            title="upstream: $proj $new"
+            if [ "$(gh issue list --state all --search "\"$title\" in:title" --json number -q length)" = "0" ]; then
+              cat > body.md <<EOT
+          Upstream released **$proj $new** (version recorded in this repository: $old).
+
+          - [ ] Read the release notes and note breaking changes related to the server or share links
+          - [ ] (sing-box / Xray-core) Check whether today's compat-watch passed
+          - [ ] (v2rayN / v2rayNG) Import the link for each protocol by hand and record the result in docs/COMPATIBILITY.md
+          - [ ] Update compat/known-good.json and CHANGELOG.md
+          EOT
+              gh issue create --title "$title" --label upstream-update --body-file body.md
+            fi
+          done
